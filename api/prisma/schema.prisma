@@ -1,0 +1,58 @@
+// StockHome — database schema
+// Mirrors the app's data model (data/MockData.kt):
+// User, Category and Product.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String // bcrypt hash
+  initials  String
+  alertDays Int       @default(7) @map("alert_days")
+  products  Product[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Category {
+  id        String    @id // slug: "alimentos", "bebidas", ...
+  name      String
+  sortOrder Int       @default(0) @map("sort_order")
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  quantity    Int       @default(0)
+  minQuantity Int       @default(1) @map("min_quantity")
+  unit        String
+  expiresAt   DateTime? @map("expires_at") @db.Date
+  lastUpdated DateTime  @default(now()) @map("last_updated") @db.Date
+
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([categoryId])
+  @@map("products")
+}

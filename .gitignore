@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editores / IDEs
+.idea/
+*.iml
+.vscode/
+
+# Node / API
+node_modules/
+dist/
+*.log
+.env
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+.cxx/
+.externalNativeBuild/
+captures/
+.kotlin/

@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: stockhome-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: stockhome
+      POSTGRES_PASSWORD: stockhome
+      POSTGRES_DB: stockhome
+    ports:
+      - "5432:5432"
+    volumes:
+      - stockhome_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockhome -d stockhome"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  stockhome_pgdata:

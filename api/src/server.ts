@@ -1,0 +1,21 @@
+import { createApp } from './app.js';
+import { env } from './config/env.js';
+import { prisma } from './lib/prisma.js';
+
+const app = createApp();
+
+const server = app.listen(env.port, () => {
+  console.log(`🟢 StockHome API running at http://localhost:${env.port}`);
+  console.log(`   Healthcheck: http://localhost:${env.port}/health`);
+});
+
+// Graceful shutdown
+async function shutdown(signal: string) {
+  console.log(`\n${signal} received, shutting down...`);
+  server.close();
+  await prisma.$disconnect();
+  process.exit(0);
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
