@@ -17,16 +17,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.stockhome.data.CATEGORIAS
-import com.example.stockhome.data.PRODUTOS
-import com.example.stockhome.data.fmtData
-import com.example.stockhome.data.fmtDataLonga
-import com.example.stockhome.data.statusItem
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.stockhome.ui.components.Button
 import com.example.stockhome.ui.components.Card
 import com.example.stockhome.ui.components.StatusChip
@@ -34,9 +32,84 @@ import com.example.stockhome.ui.components.T
 import com.example.stockhome.ui.components.TopBar
 import com.example.stockhome.ui.icons.Icon
 import com.example.stockhome.ui.theme.Sh
+import com.example.stockhome.viewmodel.DetalheViewModel
 
 @Composable
-private fun StatBlock(valor: String, sub: String, label: String, alerta: Boolean = false, modifier: Modifier = Modifier) {
+fun DetalheScreen(
+    go: (String, Any?) -> Unit,
+    id: Int,
+    vm: DetalheViewModel = viewModel(factory = DetalheViewModel.Factory(id)),
+) {
+    val state by vm.uiState.collectAsState()
+    val p = state.produto ?: return
+    val s = state.status ?: return
+
+    Column(Modifier.fillMaxSize().background(Sh.bg)) {
+        TopBar(title = "Detalhe do item", onBack = { go("itens", null) })
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
+        ) {
+            // Cabeçalho
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(18.dp))
+                        .background(Sh.surface).border(1.dp, Sh.border, RoundedCornerShape(18.dp)),
+                ) { Icon("box", 32.dp, stroke = 1.6f, color = Sh.brand) }
+                Spacer(Modifier.width(16.dp))
+                Column {
+                    T(p.nome, 21f, FontWeight.ExtraBold, Sh.ink, letterSpacing = -0.4f, lineHeight = 25f)
+                    Spacer(Modifier.height(8.dp))
+                    StatusChip(s.tipo, s.label)
+                }
+            }
+            Spacer(Modifier.height(18.dp))
+
+            // Quantidades
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatBlock(
+                    valor = p.qtd.toString(), sub = p.un,
+                    label = "Quantidade atual", alerta = state.estoqueBaixo,
+                    modifier = Modifier.weight(1f),
+                )
+                StatBlock(
+                    valor = p.min.toString(), sub = p.un,
+                    label = "Quantidade mínima",
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(18.dp))
+
+            // Informações
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(horizontal = 16.dp)) {
+                    InfoRow("tag", "Categoria", state.nomeCategoria)
+                    InfoRow("calendar", "Validade", state.validadeFmt)
+                    InfoRow("clock", "Última atualização", state.atualizadoFmt, last = true)
+                }
+            }
+            Spacer(Modifier.height(22.dp))
+
+            // Ações
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button("Editar item", { go("form", p.id) }, icon = "edit")
+                Button("Excluir item", { go("itens", null) }, variant = "danger", icon = "trash")
+            }
+        }
+    }
+}
+
+// ── Composables locais ─────────────────────────────────────────
+
+@Composable
+private fun StatBlock(
+    valor: String,
+    sub: String,
+    label: String,
+    alerta: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier
             .clip(RoundedCornerShape(14.dp)).background(Sh.surface)
@@ -65,55 +138,5 @@ private fun InfoRow(icon: String, label: String, value: String, last: Boolean = 
             T(value, 14.5f, FontWeight.Bold, Sh.ink)
         }
         if (!last) Box(Modifier.fillMaxWidth().height(1.dp).background(Sh.border))
-    }
-}
-
-@Composable
-fun DetalheScreen(go: (String, Any?) -> Unit, id: Int) {
-    val p = PRODUTOS.find { it.id == id } ?: PRODUTOS[2]
-    val s = statusItem(p)
-    val baixo = p.qtd < p.min || p.qtd == 0
-    Column(Modifier.fillMaxSize().background(Sh.bg)) {
-        TopBar(title = "Detalhe do item", onBack = { go("itens", null) })
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
-        ) {
-            // Cabeçalho
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(18.dp)).background(Sh.surface)
-                        .border(1.dp, Sh.border, RoundedCornerShape(18.dp)),
-                ) { Icon("box", 32.dp, stroke = 1.6f, color = Sh.brand) }
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    T(p.nome, 21f, FontWeight.ExtraBold, Sh.ink, letterSpacing = -0.4f, lineHeight = 25f)
-                    Spacer(Modifier.height(8.dp))
-                    StatusChip(s.tipo, s.label)
-                }
-            }
-            Spacer(Modifier.height(18.dp))
-            // Quantidades
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatBlock(p.qtd.toString(), p.un, "Quantidade atual", baixo, Modifier.weight(1f))
-                StatBlock(p.min.toString(), p.un, "Quantidade mínima", false, Modifier.weight(1f))
-            }
-            Spacer(Modifier.height(18.dp))
-            // Informações
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    InfoRow("tag", "Categoria", CATEGORIAS[p.cat]!!.nome)
-                    InfoRow("calendar", "Validade", fmtData(p.validade))
-                    InfoRow("clock", "Última atualização", fmtDataLonga(p.atualizado), last = true)
-                }
-            }
-            Spacer(Modifier.height(22.dp))
-            // Ações
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button("Editar item", { go("form", p.id) }, icon = "edit")
-                Button("Excluir item", { go("itens", null) }, variant = "danger", icon = "trash")
-            }
-        }
     }
 }
