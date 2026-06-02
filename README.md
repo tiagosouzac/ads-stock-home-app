@@ -8,15 +8,15 @@ Aplicativo Android para controle de estoque doméstico — trabalho da disciplin
 |------|--------|-----------------|
 | Pedro Lopes | @PedroHLSs | Telas Jetpack Compose, componentes UI, tema e navegação |
 | Tiago Souza de Castro | @tiagosouzac | API REST (Node.js + TypeScript + Prisma + PostgreSQL) |
-| [Seu Nome] | @[seu-github] | Arquitetura MVVM, integração app ↔ API, persistência (JWT) |
+| Arthur Xavier | @arthurxavierz | Arquitetura MVVM, integração app ↔ API, persistência (JWT) |
 
 ## 🎨 Protótipo no Figma
 
-[🔗 Inserir link do Figma aqui]
+https://www.figma.com/design/V6X8tUznvfmXAsEPREYu1o/Untitled?node-id=0-1&t=5Eyu5Zlg01YHEZHI-1
 
 ## 🎥 Vídeo demonstrativo
 
-[🔗 Inserir link do YouTube aqui]
+link youtube
 
 ---
 

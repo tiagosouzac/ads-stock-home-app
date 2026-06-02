@@ -19,14 +19,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
@@ -35,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.stockhome.ui.components.Button
 import com.example.stockhome.ui.components.Field
 import com.example.stockhome.ui.components.Logo
@@ -44,6 +49,9 @@ import com.example.stockhome.ui.components.Wordmark
 import com.example.stockhome.ui.icons.Icon
 import com.example.stockhome.ui.theme.Manrope
 import com.example.stockhome.ui.theme.Sh
+import com.example.stockhome.viewmodel.AuthViewModel
+
+// ── Splash ────────────────────────────────────────────────────
 
 @Composable
 fun SplashScreen(go: (String, Any?) -> Unit) {
@@ -92,15 +100,30 @@ private fun Spinner() {
     }
 }
 
+// ── Login ─────────────────────────────────────────────────────
+
 @Composable
-fun LoginScreen(go: (String, Any?) -> Unit) {
+fun LoginScreen(
+    go: (String, Any?) -> Unit,
+    vm: AuthViewModel = viewModel(),
+) {
+    val state by vm.uiState.collectAsState()
+
+    // Campos de texto controlados
+    var email by remember { mutableStateOf("") }
+    var senha by remember { mutableStateOf("") }
+
+    // Quando login der certo, navega para home
+    LaunchedEffect(state.sucesso) {
+        if (state.sucesso) go("home", null)
+    }
+
     Column(
         Modifier
             .fillMaxSize()
             .background(Sh.bg)
             .verticalScroll(rememberScrollState()),
     ) {
-        // Cabeçalho de marca com um leve degradê verde.
         Box(
             Modifier
                 .fillMaxWidth()
@@ -123,21 +146,43 @@ fun LoginScreen(go: (String, Any?) -> Unit) {
             T("Entre para acompanhar seu estoque.", 15f, FontWeight.SemiBold, Sh.ink3)
             Spacer(Modifier.height(22.dp))
 
-            // Formulário dentro de um cartão, destacando-o do fundo.
             com.example.stockhome.ui.components.Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 22.dp)) {
-                    Field(label = "E-mail", value = "marina.alves@email.com", icon = "mail")
                     Field(
-                        label = "Senha", value = "••••••••", icon = "lock", focus = true,
+                        label = "E-mail",
+                        value = email.ifBlank { null },
+                        placeholder = "seu@email.com",
+                        icon = "mail",
+                        onClick = { /* campo estático no protótipo */ },
+                    )
+                    Field(
+                        label = "Senha",
+                        value = if (senha.isNotBlank()) "•".repeat(senha.length) else null,
+                        placeholder = "••••••••",
+                        icon = "lock",
+                        focus = true,
                         trailing = { Icon("eye", 20.dp, color = Sh.ink3) },
                     )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Box(Modifier.clickable { }) {
-                            T("Esqueci minha senha", 13.5f, FontWeight.Bold, Sh.brandDark)
-                        }
+
+                    // Mensagem de erro da API
+                    if (state.erro != null) {
+                        Spacer(Modifier.height(8.dp))
+                        T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
                     }
+
                     Spacer(Modifier.height(18.dp))
-                    Button("Entrar", { go("home", null) }, icon = "logout")
+
+                    if (state.loading) {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Sh.brand, modifier = Modifier.size(32.dp))
+                        }
+                    } else {
+                        Button(
+                            text = "Entrar",
+                            onClick = { vm.login(email, senha) },
+                            icon = "logout",
+                        )
+                    }
                 }
             }
 
@@ -156,8 +201,23 @@ fun LoginScreen(go: (String, Any?) -> Unit) {
     }
 }
 
+// ── Cadastro ──────────────────────────────────────────────────
+
 @Composable
-fun CadastroScreen(go: (String, Any?) -> Unit) {
+fun CadastroScreen(
+    go: (String, Any?) -> Unit,
+    vm: AuthViewModel = viewModel(),
+) {
+    val state by vm.uiState.collectAsState()
+
+    var nome by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var senha by remember { mutableStateOf("") }
+
+    LaunchedEffect(state.sucesso) {
+        if (state.sucesso) go("home", null)
+    }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -168,16 +228,49 @@ fun CadastroScreen(go: (String, Any?) -> Unit) {
         Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp)) {
             T("Leva menos de um minuto para começar a organizar sua casa.", 15f, FontWeight.SemiBold, Sh.ink3)
             Spacer(Modifier.height(26.dp))
-            Field(label = "Nome completo", value = "Marina Alves", icon = "user")
-            Field(label = "E-mail", value = "marina.alves@email.com", icon = "mail")
-            Field(label = "Senha", value = "••••", icon = "lock", focus = true, error = "Use ao menos 6 caracteres.")
+
+            Field(
+                label = "Nome completo",
+                value = nome.ifBlank { null },
+                placeholder = "Seu nome",
+                icon = "user",
+            )
+            Field(
+                label = "E-mail",
+                value = email.ifBlank { null },
+                placeholder = "seu@email.com",
+                icon = "mail",
+            )
+            Field(
+                label = "Senha",
+                value = if (senha.isNotBlank()) "•".repeat(senha.length) else null,
+                placeholder = "••••••••",
+                icon = "lock",
+                focus = true,
+                error = if (state.erro?.contains("6") == true) state.erro else null,
+            )
+
+            if (state.erro != null && state.erro?.contains("6") == false) {
+                Spacer(Modifier.height(8.dp))
+                T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
+            }
+
             Spacer(Modifier.height(24.dp))
-            Button("Criar conta", { go("home", null) })
+
+            if (state.loading) {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Sh.brand, modifier = Modifier.size(32.dp))
+                }
+            } else {
+                Button("Criar conta", { vm.cadastrar(nome, email, senha) })
+            }
+
             Spacer(Modifier.height(16.dp))
             Text(
                 "Ao continuar você concorda com os Termos\nde Uso e a Política de Privacidade.",
-                color = Sh.ink3, fontFamily = Manrope, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center, lineHeight = 18.sp, modifier = Modifier.fillMaxWidth(),
+                color = Sh.ink3, fontFamily = Manrope, fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                lineHeight = 18.sp, modifier = Modifier.fillMaxWidth(),
             )
         }
     }
