@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # OS
 .DS_Store
 Thumbs.db
@@ -21,3 +22,15 @@ local.properties
 .externalNativeBuild/
 captures/
 .kotlin/
+=======
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+>>>>>>> 97c7b4c (App)
