@@ -12,11 +12,11 @@ Aplicativo Android para controle de estoque doméstico — trabalho da disciplin
 
 ## 🎨 Protótipo no Figma
 
-[🔗 Inserir link do Figma aqui]
+https://www.figma.com/design/V6X8tUznvfmXAsEPREYu1o/Untitled?node-id=0-1&t=5Eyu5Zlg01YHEZHI-1
 
 ## 🎥 Vídeo demonstrativo
 
-[🔗 Inserir link do YouTube aqui]
+link youtube
 
 ---
 
