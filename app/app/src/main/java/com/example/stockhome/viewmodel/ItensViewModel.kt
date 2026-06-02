@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.stockhome.data.ApiCategory
 import com.example.stockhome.data.ApiProduct
+import com.example.stockhome.data.Produto
+import com.example.stockhome.data.toProduto
 import com.example.stockhome.network.ApiResult
 import com.example.stockhome.network.RetrofitClient
 import com.example.stockhome.network.safeApiCall
@@ -17,12 +19,12 @@ data class ItensUiState(
     val loading: Boolean = true,
     val erro: String? = null,
     val iniciais: String = "",
-    val categorias: List<ApiCategory> = emptyList(),
+    val categorias: List<String> = listOf("Todas"), // [Todas] + nomes das categorias
     val categoriaSelecionada: Int = 0,    // índice em [Todas] + categorias
     val filtrosStatus: List<String> = listOf("Todos", "Estoque baixo", "Vencendo", "OK"),
     val statusSelecionado: Int = 0,
     val termoBusca: String = "",
-    val itensFiltrados: List<ApiProduct> = emptyList(),
+    val itensFiltrados: List<Produto> = emptyList(),
     val totalAlertas: Int = 0,
 )
 
@@ -37,17 +39,22 @@ class ItensViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ItensUiState())
     val uiState: StateFlow<ItensUiState> = _uiState.asStateFlow()
     private var todosOsItens: List<ApiProduct> = emptyList()
+    private var apiCategorias: List<ApiCategory> = emptyList()
 
     init {
         viewModelScope.launch {
-            // Carrega categorias e produtos simultaneamente (sequencial por simplicidade)
             val catsResult = safeApiCall { RetrofitClient.api.listCategories() }
-            val cats = (catsResult as? ApiResult.Success)?.data ?: emptyList()
+            apiCategorias = (catsResult as? ApiResult.Success)?.data ?: emptyList()
 
             val userResult = safeApiCall { RetrofitClient.api.getMe() }
             val iniciais = (userResult as? ApiResult.Success)?.data?.initials ?: ""
 
-            _uiState.update { it.copy(categorias = cats, iniciais = iniciais) }
+            _uiState.update {
+                it.copy(
+                    categorias = listOf("Todas") + apiCategorias.map { c -> c.name },
+                    iniciais = iniciais,
+                )
+            }
             carregarProdutos()
         }
     }
@@ -95,9 +102,9 @@ class ItensViewModel : ViewModel() {
             lista = lista.filter { it.name.contains(state.termoBusca, ignoreCase = true) }
         }
 
-        // Filtro de categoria (índice 0 = "Todos")
-        if (state.categoriaSelecionada != 0 && state.categorias.isNotEmpty()) {
-            val cat = state.categorias[state.categoriaSelecionada - 1]
+        // Filtro de categoria (índice 0 = "Todas")
+        if (state.categoriaSelecionada != 0 && state.categoriaSelecionada - 1 in apiCategorias.indices) {
+            val cat = apiCategorias[state.categoriaSelecionada - 1]
             lista = lista.filter { it.categoryId == cat.id }
         }
 
@@ -113,6 +120,6 @@ class ItensViewModel : ViewModel() {
         lista = lista.sortedWith(compareBy({ ordem[it.status.type] ?: 99 }, { it.name }))
 
         val totalAlertas = todosOsItens.count { it.status.type != "ok" }
-        _uiState.update { it.copy(itensFiltrados = lista, totalAlertas = totalAlertas) }
+        _uiState.update { it.copy(itensFiltrados = lista.map { p -> p.toProduto() }, totalAlertas = totalAlertas) }
     }
 }

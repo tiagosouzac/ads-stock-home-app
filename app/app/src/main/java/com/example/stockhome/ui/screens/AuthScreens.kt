@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,15 +31,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.stockhome.network.RetrofitClient
 import com.example.stockhome.ui.components.Button
 import com.example.stockhome.ui.components.Field
 import com.example.stockhome.ui.components.Logo
@@ -50,11 +53,15 @@ import com.example.stockhome.ui.icons.Icon
 import com.example.stockhome.ui.theme.Manrope
 import com.example.stockhome.ui.theme.Sh
 import com.example.stockhome.viewmodel.AuthViewModel
-
-// ── Splash ────────────────────────────────────────────────────
+import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(go: (String, Any?) -> Unit) {
+    // Verifica a sessão salva: com token válido vai direto para a Home.
+    LaunchedEffect(Unit) {
+        delay(700)
+        go(if (RetrofitClient.isLoggedIn()) "home" else "login", null)
+    }
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -100,22 +107,21 @@ private fun Spinner() {
     }
 }
 
-// ── Login ─────────────────────────────────────────────────────
-
 @Composable
 fun LoginScreen(
     go: (String, Any?) -> Unit,
     vm: AuthViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
-
-    // Campos de texto controlados
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
+    var verSenha by remember { mutableStateOf(false) }
 
-    // Quando login der certo, navega para home
     LaunchedEffect(state.sucesso) {
-        if (state.sucesso) go("home", null)
+        if (state.sucesso) {
+            vm.limparSucesso()
+            go("home", null)
+        }
     }
 
     Column(
@@ -124,6 +130,7 @@ fun LoginScreen(
             .background(Sh.bg)
             .verticalScroll(rememberScrollState()),
     ) {
+        // Cabeçalho de marca com um leve degradê verde.
         Box(
             Modifier
                 .fillMaxWidth()
@@ -146,43 +153,46 @@ fun LoginScreen(
             T("Entre para acompanhar seu estoque.", 15f, FontWeight.SemiBold, Sh.ink3)
             Spacer(Modifier.height(22.dp))
 
+            // Formulário dentro de um cartão, destacando-o do fundo.
             com.example.stockhome.ui.components.Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 22.dp)) {
                     Field(
                         label = "E-mail",
-                        value = email.ifBlank { null },
-                        placeholder = "seu@email.com",
+                        value = email,
+                        onValueChange = { email = it; vm.limparErro() },
+                        placeholder = "voce@email.com",
                         icon = "mail",
-                        onClick = { /* campo estático no protótipo */ },
+                        keyboardType = KeyboardType.Email,
                     )
                     Field(
                         label = "Senha",
-                        value = if (senha.isNotBlank()) "•".repeat(senha.length) else null,
-                        placeholder = "••••••••",
+                        value = senha,
+                        onValueChange = { senha = it; vm.limparErro() },
+                        placeholder = "Sua senha",
                         icon = "lock",
-                        focus = true,
-                        trailing = { Icon("eye", 20.dp, color = Sh.ink3) },
+                        isPassword = !verSenha,
+                        keyboardType = KeyboardType.Password,
+                        trailing = {
+                            Box(Modifier.clickable { verSenha = !verSenha }) {
+                                Icon("eye", 20.dp, color = if (verSenha) Sh.brand else Sh.ink3)
+                            }
+                        },
                     )
-
-                    // Mensagem de erro da API
                     if (state.erro != null) {
-                        Spacer(Modifier.height(8.dp))
                         T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
+                        Spacer(Modifier.height(10.dp))
                     }
-
-                    Spacer(Modifier.height(18.dp))
-
-                    if (state.loading) {
-                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Sh.brand, modifier = Modifier.size(32.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        Box(Modifier.clickable { }) {
+                            T("Esqueci minha senha", 13.5f, FontWeight.Bold, Sh.brandDark)
                         }
-                    } else {
-                        Button(
-                            text = "Entrar",
-                            onClick = { vm.login(email, senha) },
-                            icon = "logout",
-                        )
                     }
+                    Spacer(Modifier.height(18.dp))
+                    Button(
+                        if (state.loading) "Entrando…" else "Entrar",
+                        { vm.login(email, senha) },
+                        icon = "logout",
+                    )
                 }
             }
 
@@ -201,21 +211,22 @@ fun LoginScreen(
     }
 }
 
-// ── Cadastro ──────────────────────────────────────────────────
-
 @Composable
 fun CadastroScreen(
     go: (String, Any?) -> Unit,
     vm: AuthViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
-
     var nome by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
+    var verSenha by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.sucesso) {
-        if (state.sucesso) go("home", null)
+        if (state.sucesso) {
+            vm.limparSucesso()
+            go("home", null)
+        }
     }
 
     Column(
@@ -228,49 +239,46 @@ fun CadastroScreen(
         Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp)) {
             T("Leva menos de um minuto para começar a organizar sua casa.", 15f, FontWeight.SemiBold, Sh.ink3)
             Spacer(Modifier.height(26.dp))
-
             Field(
                 label = "Nome completo",
-                value = nome.ifBlank { null },
+                value = nome,
+                onValueChange = { nome = it; vm.limparErro() },
                 placeholder = "Seu nome",
                 icon = "user",
             )
             Field(
                 label = "E-mail",
-                value = email.ifBlank { null },
-                placeholder = "seu@email.com",
+                value = email,
+                onValueChange = { email = it; vm.limparErro() },
+                placeholder = "voce@email.com",
                 icon = "mail",
+                keyboardType = KeyboardType.Email,
             )
             Field(
                 label = "Senha",
-                value = if (senha.isNotBlank()) "•".repeat(senha.length) else null,
-                placeholder = "••••••••",
+                value = senha,
+                onValueChange = { senha = it; vm.limparErro() },
+                placeholder = "Ao menos 6 caracteres",
                 icon = "lock",
-                focus = true,
-                error = if (state.erro?.contains("6") == true) state.erro else null,
+                isPassword = !verSenha,
+                keyboardType = KeyboardType.Password,
+                error = state.erro,
+                trailing = {
+                    Box(Modifier.clickable { verSenha = !verSenha }) {
+                        Icon("eye", 20.dp, color = if (verSenha) Sh.brand else Sh.ink3)
+                    }
+                },
             )
-
-            if (state.erro != null && state.erro?.contains("6") == false) {
-                Spacer(Modifier.height(8.dp))
-                T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
-            }
-
             Spacer(Modifier.height(24.dp))
-
-            if (state.loading) {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Sh.brand, modifier = Modifier.size(32.dp))
-                }
-            } else {
-                Button("Criar conta", { vm.cadastrar(nome, email, senha) })
-            }
-
+            Button(
+                if (state.loading) "Criando…" else "Criar conta",
+                { vm.cadastrar(nome, email, senha) },
+            )
             Spacer(Modifier.height(16.dp))
             Text(
                 "Ao continuar você concorda com os Termos\nde Uso e a Política de Privacidade.",
-                color = Sh.ink3, fontFamily = Manrope, fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
-                lineHeight = 18.sp, modifier = Modifier.fillMaxWidth(),
+                color = Sh.ink3, fontFamily = Manrope, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center, lineHeight = 18.sp, modifier = Modifier.fillMaxWidth(),
             )
         }
     }

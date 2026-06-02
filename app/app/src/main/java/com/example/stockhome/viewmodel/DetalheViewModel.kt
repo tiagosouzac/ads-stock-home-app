@@ -3,7 +3,13 @@ package com.example.stockhome.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.stockhome.data.ApiProduct
+import com.example.stockhome.data.CATEGORIAS
+import com.example.stockhome.data.Produto
+import com.example.stockhome.data.Status
+import com.example.stockhome.data.fmtData
+import com.example.stockhome.data.parseIsoDate
+import com.example.stockhome.data.statusTipoFromApi
+import com.example.stockhome.data.toProduto
 import com.example.stockhome.network.ApiResult
 import com.example.stockhome.network.RetrofitClient
 import com.example.stockhome.network.safeApiCall
@@ -16,7 +22,12 @@ import kotlinx.coroutines.launch
 data class DetalheUiState(
     val loading: Boolean = true,
     val erro: String? = null,
-    val produto: ApiProduct? = null,
+    val produto: Produto? = null,
+    val status: Status? = null,
+    val estoqueBaixo: Boolean = false,
+    val nomeCategoria: String = "",
+    val validadeFmt: String = "—",
+    val atualizadoFmt: String = "—",
     val deletando: Boolean = false,
     val deletado: Boolean = false,
 )
@@ -39,8 +50,23 @@ class DetalheViewModel(private val id: Int) : ViewModel() {
         viewModelScope.launch {
             val result = safeApiCall { RetrofitClient.api.getProduct(id) }
             when (result) {
-                is ApiResult.Success ->
-                    _uiState.update { it.copy(loading = false, produto = result.data) }
+                is ApiResult.Success -> {
+                    val api = result.data
+                    val nomeCat = api.category?.name
+                        ?: CATEGORIAS[api.categoryId]?.nome
+                        ?: api.categoryId
+                    _uiState.update {
+                        it.copy(
+                            loading = false,
+                            produto = api.toProduto(),
+                            status = Status(statusTipoFromApi(api.status.type), api.status.label),
+                            estoqueBaixo = api.status.type == "low",
+                            nomeCategoria = nomeCat,
+                            validadeFmt = fmtData(parseIsoDate(api.expiresAt)),
+                            atualizadoFmt = fmtData(parseIsoDate(api.lastUpdated)),
+                        )
+                    }
+                }
                 is ApiResult.Error ->
                     _uiState.update { it.copy(loading = false, erro = result.message) }
             }

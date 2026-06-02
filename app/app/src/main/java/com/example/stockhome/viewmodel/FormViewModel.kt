@@ -27,7 +27,10 @@ data class FormUiState(
     val qtdMinima: Int = 1,
     val unidade: String = "un",
     val validade: String = "",   // formato "YYYY-MM-DD" internamente
-)
+) {
+    /** Nome da categoria selecionada, para exibição no campo. */
+    val nomeCategoria: String get() = categoriaSelecionada?.name ?: "Selecione…"
+}
 
 /**
  * ViewModel da FormScreen (adicionar e editar produto).
@@ -71,6 +74,15 @@ class FormViewModel(private val id: Any?) : ViewModel() {
     fun onCategoriaChange(cat: ApiCategory) = _uiState.update { it.copy(categoriaSelecionada = cat) }
     fun onValidadeChange(v: String) = _uiState.update { it.copy(validade = v) }
     fun onUnidadeChange(u: String) = _uiState.update { it.copy(unidade = u) }
+
+    /** Avança para a próxima categoria da lista (seletor simples por toque). */
+    fun proximaCategoria() {
+        val cats = _uiState.value.categorias
+        if (cats.isEmpty()) return
+        val atual = cats.indexOfFirst { it.id == _uiState.value.categoriaSelecionada?.id }
+        val proxima = cats[(atual + 1).mod(cats.size)]
+        _uiState.update { it.copy(categoriaSelecionada = proxima) }
+    }
 
     fun incrementarQtdAtual() = _uiState.update { it.copy(qtdAtual = it.qtdAtual + 1) }
     fun decrementarQtdAtual() = _uiState.update { it.copy(qtdAtual = maxOf(0, it.qtdAtual - 1)) }

@@ -3,6 +3,8 @@ package com.example.stockhome.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,9 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -206,16 +212,22 @@ fun Button(
     }
 }
 
-/** Campo de formulário estático (com label, ícone, foco simulado, erro). */
+/**
+ * Campo de formulário. Se [onValueChange] for fornecido, vira um campo de texto
+ * editável (BasicTextField); caso contrário, exibe [value] de forma estática.
+ */
 @Composable
 fun Field(
     label: String,
     value: String? = null,
+    onValueChange: ((String) -> Unit)? = null,
     placeholder: String? = null,
     icon: String? = null,
     helper: String? = null,
     error: String? = null,
     focus: Boolean = false,
+    isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
     trailing: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
@@ -247,12 +259,34 @@ fun Field(
             if (icon != null) {
                 Icon(icon, 20.dp, color = if (error != null) Sh.danger.fg else if (focus) Sh.brand else Sh.ink3)
             }
-            T(
-                if (filled) value!! else (placeholder ?: ""),
-                15.5f, FontWeight.Medium,
-                if (filled) Sh.ink else Sh.ink3,
-                modifier = Modifier.weight(1f), maxLines = 1,
-            )
+            if (onValueChange != null) {
+                BasicTextField(
+                    value = value ?: "",
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        color = Sh.ink, fontFamily = Manrope,
+                        fontSize = 15.5.sp, fontWeight = FontWeight.Medium,
+                    ),
+                    cursorBrush = SolidColor(Sh.brand),
+                    visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    modifier = Modifier.weight(1f),
+                    decorationBox = { inner ->
+                        if (!filled && placeholder != null) {
+                            T(placeholder, 15.5f, FontWeight.Medium, Sh.ink3, maxLines = 1)
+                        }
+                        inner()
+                    },
+                )
+            } else {
+                T(
+                    if (filled) value!! else (placeholder ?: ""),
+                    15.5f, FontWeight.Medium,
+                    if (filled) Sh.ink else Sh.ink3,
+                    modifier = Modifier.weight(1f), maxLines = 1,
+                )
+            }
             if (trailing != null) trailing()
         }
         if (error != null || helper != null) {

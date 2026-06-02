@@ -29,7 +29,7 @@ object RetrofitClient {
      *   - Celular físico na mesma rede → "http://<IP-DO-PC>:3000/"
      *   - Produção → URL real do servidor
      */
-    private const val BASE_URL = "http://10.0.2.2:3000/"
+    private const val BASE_URL = "http://10.0.2.2:3000/api/"
 
     private const val PREFS_NAME = "stockhome_prefs"
     private const val KEY_TOKEN = "jwt_token"

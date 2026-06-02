@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,9 +39,15 @@ import com.example.stockhome.viewmodel.DetalheViewModel
 fun DetalheScreen(
     go: (String, Any?) -> Unit,
     id: Int,
-    vm: DetalheViewModel = viewModel(factory = DetalheViewModel.Factory(id)),
+    vm: DetalheViewModel = viewModel(key = "detalhe_$id", factory = DetalheViewModel.Factory(id)),
 ) {
     val state by vm.uiState.collectAsState()
+
+    // Recarrega ao (re)entrar, refletindo edições feitas no formulário.
+    LaunchedEffect(Unit) { vm.carregarProduto() }
+    // Após excluir, volta para a lista de itens.
+    LaunchedEffect(state.deletado) { if (state.deletado) go("itens", null) }
+
     val p = state.produto ?: return
     val s = state.status ?: return
 
@@ -94,7 +101,12 @@ fun DetalheScreen(
             // Ações
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button("Editar item", { go("form", p.id) }, icon = "edit")
-                Button("Excluir item", { go("itens", null) }, variant = "danger", icon = "trash")
+                Button(
+                    if (state.deletando) "Excluindo…" else "Excluir item",
+                    { vm.excluir() },
+                    variant = "danger",
+                    icon = "trash",
+                )
             }
         }
     }

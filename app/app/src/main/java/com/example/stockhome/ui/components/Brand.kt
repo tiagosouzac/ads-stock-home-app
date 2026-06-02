@@ -130,7 +130,7 @@ fun ItemRow(p: Produto, go: (String, Any?) -> Unit, last: Boolean) {
                     fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(2.dp))
-                T("${p.qtd} ${p.un} · ${CATEGORIAS[p.cat]!!.nome}", 13f, FontWeight.SemiBold, Sh.ink3, maxLines = 1)
+                T("${p.qtd} ${p.un} · ${CATEGORIAS[p.cat]?.nome ?: p.cat}", 13f, FontWeight.SemiBold, Sh.ink3, maxLines = 1)
             }
             Spacer(Modifier.width(13.dp))
             StatusChip(tipo, label, small = true)

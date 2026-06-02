@@ -77,4 +77,11 @@ class AuthViewModel : ViewModel() {
     }
 
     fun limparErro() = _uiState.update { it.copy(erro = null) }
+
+    /**
+     * Reseta o sinal de sucesso depois que a navegação já o consumiu.
+     * Necessário porque o ViewModel tem escopo de Activity e é reutilizado
+     * entre login/cadastro (sem isso, voltar ao login redirecionaria sozinho).
+     */
+    fun limparSucesso() = _uiState.update { it.copy(sucesso = false) }
 }

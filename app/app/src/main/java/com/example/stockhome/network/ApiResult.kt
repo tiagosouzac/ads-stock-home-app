@@ -26,10 +26,12 @@ suspend fun <T> safeApiCall(call: suspend () -> Response<T>): ApiResult<T> {
                 ApiResult.Error("Resposta vazia do servidor.")
             }
         } else {
+            // Sessão expirada/ inválida: descarta o token para forçar novo login.
+            if (response.code() == 401) RetrofitClient.clearToken()
+
             val errorMsg = response.errorBody()?.string()
-            // Tenta extrair o campo "message" do JSON de erro da API
             val msg = errorMsg
-                ?.substringAfter("\"message\":\"")
+                ?.substringAfter("\"error\":\"", "")
                 ?.substringBefore("\"")
                 ?.takeIf { it.isNotBlank() }
                 ?: "Erro ${response.code()}"

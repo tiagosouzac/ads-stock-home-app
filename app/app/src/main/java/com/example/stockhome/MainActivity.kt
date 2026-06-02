@@ -32,6 +32,7 @@ import com.example.stockhome.ui.theme.StockHomeTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // O RetrofitClient é inicializado em StockHomeApp (Application), antes de qualquer tela.
         enableEdgeToEdge()
         setContent {
             StockHomeTheme {

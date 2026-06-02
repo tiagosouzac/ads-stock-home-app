@@ -2,7 +2,8 @@ package com.example.stockhome.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.stockhome.data.ApiProduct
+import com.example.stockhome.data.Produto
+import com.example.stockhome.data.toProduto
 import com.example.stockhome.network.ApiResult
 import com.example.stockhome.network.RetrofitClient
 import com.example.stockhome.network.safeApiCall
@@ -21,7 +22,7 @@ data class HomeUiState(
     val itensEstoqueBaixo: Int = 0,
     val itensVencendo: Int = 0,
     val totalAlertas: Int = 0,
-    val itensAtencao: List<ApiProduct> = emptyList(),
+    val itensAtencao: List<Produto> = emptyList(),
 )
 
 /**
@@ -56,8 +57,8 @@ class HomeViewModel : ViewModel() {
             val atencao = (resumo.expiring + resumo.low)
                 .distinctBy { it.id }
                 .take(3)
-            val totalAlertas = (resumo.expiring + resumo.low)
-                .map { it.id }.toSet().size
+                .map { it.toProduto() }
+            val totalAlertas = resumo.counters.low + resumo.counters.expiring + resumo.counters.expired
 
             _uiState.update {
                 it.copy(

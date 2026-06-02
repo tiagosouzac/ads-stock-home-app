@@ -7,9 +7,10 @@ import java.time.temporal.ChronoUnit
  * Porta fiel de sh-data.jsx — dados mock do StockHome (produtos BR),
  * categorias, usuário e helpers de status/datas.
  *
- * "Hoje" fixo para o protótipo: 1 de junho de 2026.
+ * "Hoje" = data atual do dispositivo, para que o status calculado localmente
+ * (ItemRow) coincida com o status calculado pela API.
  */
-val HOJE: LocalDate = LocalDate.of(2026, 6, 1)
+val HOJE: LocalDate get() = LocalDate.now()
 
 data class Categoria(val id: String, val nome: String)
 

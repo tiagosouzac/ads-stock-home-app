@@ -3,6 +3,7 @@ package com.example.stockhome.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,14 +18,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.stockhome.ui.theme.Manrope
 import com.example.stockhome.ui.components.Avatar
 import com.example.stockhome.ui.components.BottomNav
 import com.example.stockhome.ui.components.Card
@@ -43,6 +49,7 @@ fun ItensScreen(
     vm: ItensViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
+    LaunchedEffect(Unit) { vm.recarregar() }
 
     Column(Modifier.fillMaxSize().background(Sh.bg)) {
         TopBar(
@@ -66,10 +73,22 @@ fun ItensScreen(
                         .padding(horizontal = 14.dp),
                 ) {
                     Icon("search", 20.dp, color = Sh.ink3)
-                    // Campo de busca estático no protótipo; o ViewModel já suporta onBuscaChange
-                    T(
-                        if (state.termoBusca.isBlank()) "Buscar por nome…" else state.termoBusca,
-                        15f, FontWeight.Medium, Sh.ink3,
+                    BasicTextField(
+                        value = state.termoBusca,
+                        onValueChange = { vm.onBuscaChange(it) },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = Sh.ink, fontFamily = Manrope,
+                            fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                        ),
+                        cursorBrush = SolidColor(Sh.brand),
+                        modifier = Modifier.weight(1f),
+                        decorationBox = { inner ->
+                            if (state.termoBusca.isBlank()) {
+                                T("Buscar por nome…", 15f, FontWeight.Medium, Sh.ink3, maxLines = 1)
+                            }
+                            inner()
+                        },
                     )
                 }
                 Spacer(Modifier.height(14.dp))

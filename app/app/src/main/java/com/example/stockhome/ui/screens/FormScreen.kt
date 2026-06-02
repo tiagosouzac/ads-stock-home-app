@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,10 +38,13 @@ import com.example.stockhome.viewmodel.FormViewModel
 fun FormScreen(
     go: (String, Any?) -> Unit,
     id: Any?,
-    vm: FormViewModel = viewModel(factory = FormViewModel.Factory(id)),
+    vm: FormViewModel = viewModel(key = "form_$id", factory = FormViewModel.Factory(id)),
 ) {
     val state by vm.uiState.collectAsState()
     val voltar = { if (state.editando) go("detalhe", id) else go("itens", null) }
+
+    // Volta para a lista assim que o produto for salvo na API.
+    LaunchedEffect(state.salvo) { if (state.salvo) go("itens", null) }
 
     Column(Modifier.fillMaxSize().background(Sh.bg)) {
         TopBar(
@@ -53,7 +57,8 @@ fun FormScreen(
         ) {
             Field(
                 label = "Nome do produto",
-                value = state.nomeProduto.ifBlank { null },
+                value = state.nomeProduto,
+                onValueChange = vm::onNomeChange,
                 placeholder = "Ex.: Arroz branco 5kg",
             )
             Field(
@@ -61,6 +66,7 @@ fun FormScreen(
                 value = state.nomeCategoria,
                 icon = "tag",
                 trailing = { Icon("chevD", 20.dp, color = Sh.ink3) },
+                onClick = vm::proximaCategoria,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Stepper(
@@ -87,11 +93,15 @@ fun FormScreen(
             Spacer(Modifier.height(18.dp))
             Field(
                 label = "Data de validade (opcional)",
-                value = state.validade.ifBlank { null },
-                placeholder = "dd/mm/aaaa",
+                value = state.validade,
+                onValueChange = vm::onValidadeChange,
+                placeholder = "aaaa-mm-dd",
                 icon = "calendar",
-                trailing = { Icon("chevD", 20.dp, color = Sh.ink3) },
             )
+            if (state.erro != null) {
+                Spacer(Modifier.height(2.dp))
+                T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
+            }
         }
 
         // Barra de ações
@@ -101,7 +111,12 @@ fun FormScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Button("Cancelar", { voltar() }, variant = "secondary", full = false)
-            Button("Salvar", { voltar() }, icon = "check", modifier = Modifier.weight(1f))
+            Button(
+                if (state.loading) "Salvando…" else "Salvar",
+                { vm.salvar() },
+                icon = "check",
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

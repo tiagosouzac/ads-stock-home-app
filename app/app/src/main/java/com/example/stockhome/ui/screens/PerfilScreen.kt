@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ fun PerfilScreen(
     vm: PerfilViewModel = viewModel(),
 ) {
     val state by vm.uiState.collectAsState()
+    LaunchedEffect(Unit) { vm.carregarPerfil() }
 
     Column(Modifier.fillMaxSize().background(Sh.bg)) {
         TopBar(title = "Perfil", onBack = { go("home", null) })
@@ -101,7 +103,7 @@ fun PerfilScreen(
             }
             Spacer(Modifier.height(22.dp))
 
-            Button("Sair da conta", { go("login", null) }, variant = "danger", icon = "logout")
+            Button("Sair da conta", { vm.sair(); go("login", null) }, variant = "danger", icon = "logout")
             Spacer(Modifier.height(18.dp))
 
             Text(
