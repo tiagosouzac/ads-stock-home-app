@@ -24,6 +24,16 @@ data class AuthResponse(
     val user: ApiUser,
 )
 
+data class ResetPasswordRequest(
+    val email: String,
+    val newPassword: String,
+)
+
+/** Resposta simples de operações sem corpo de dados (ex.: troca de senha). */
+data class OkResponse(
+    val ok: Boolean,
+)
+
 // ── Usuário ───────────────────────────────────────────────────
 
 data class ApiUser(
@@ -37,6 +47,11 @@ data class ApiUser(
 data class UpdateMeRequest(
     val name: String? = null,
     val alertDays: Int? = null,
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String,
 )
 
 // ── Categorias ────────────────────────────────────────────────

@@ -70,8 +70,8 @@ fun PerfilScreen(
             SectionLabel("CONTA")
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = 16.dp)) {
-                    MenuRow("user", "Editar perfil")
-                    MenuRow("key", "Alterar senha", last = true)
+                    MenuRow("user", "Editar perfil", onClick = { go("editarPerfil", null) })
+                    MenuRow("key", "Alterar senha", last = true, onClick = { go("alterarSenha", null) })
                 }
             }
             Spacer(Modifier.height(22.dp))

@@ -7,6 +7,7 @@ import com.example.stockhome.data.CATEGORIAS
 import com.example.stockhome.data.Produto
 import com.example.stockhome.data.Status
 import com.example.stockhome.data.fmtData
+import com.example.stockhome.data.fmtDataLonga
 import com.example.stockhome.data.parseIsoDate
 import com.example.stockhome.data.statusTipoFromApi
 import com.example.stockhome.data.toProduto
@@ -63,7 +64,7 @@ class DetalheViewModel(private val id: Int) : ViewModel() {
                             estoqueBaixo = api.status.type == "low",
                             nomeCategoria = nomeCat,
                             validadeFmt = fmtData(parseIsoDate(api.expiresAt)),
-                            atualizadoFmt = fmtData(parseIsoDate(api.lastUpdated)),
+                            atualizadoFmt = fmtDataLonga(parseIsoDate(api.lastUpdated)),
                         )
                     }
                 }

@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
 data class PerfilUiState(
     val loading: Boolean = true,
     val salvando: Boolean = false,
+    val salvo: Boolean = false,
     val erro: String? = null,
+    val erroNome: String? = null,
     val nome: String = "",
     val email: String = "",
     val iniciais: String = "",
@@ -58,6 +60,37 @@ class PerfilViewModel : ViewModel() {
             }
         }
     }
+
+    /** Atualiza o nome localmente enquanto o usuário digita na tela de edição. */
+    fun onNomeChange(nome: String) {
+        _uiState.update { it.copy(nome = nome, erroNome = null) }
+    }
+
+    /** Salva o nome na API (PATCH /me) e sinaliza [PerfilUiState.salvo] no sucesso. */
+    fun salvarNome() {
+        val nome = _uiState.value.nome.trim()
+        if (nome.length < 2) {
+            _uiState.update { it.copy(erroNome = "Informe o nome completo.") }
+            return
+        }
+        _uiState.update { it.copy(salvando = true, erroNome = null) }
+        viewModelScope.launch {
+            val result = safeApiCall { RetrofitClient.api.updateMe(UpdateMeRequest(name = nome)) }
+            when (result) {
+                is ApiResult.Success -> {
+                    val u = result.data
+                    _uiState.update {
+                        it.copy(salvando = false, salvo = true, nome = u.name, iniciais = u.initials)
+                    }
+                }
+                is ApiResult.Error ->
+                    _uiState.update { it.copy(salvando = false, erroNome = result.message) }
+            }
+        }
+    }
+
+    /** Reseta o sinal de salvo após a navegação consumi-lo. */
+    fun limparSalvo() = _uiState.update { it.copy(salvo = false) }
 
     fun onDiasAlertaChange(dias: Int) {
         _uiState.update { it.copy(diasAlerta = dias) }

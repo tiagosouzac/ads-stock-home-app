@@ -18,8 +18,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.stockhome.ui.screens.AlertasScreen
+import com.example.stockhome.ui.screens.AlterarSenhaScreen
 import com.example.stockhome.ui.screens.CadastroScreen
 import com.example.stockhome.ui.screens.DetalheScreen
+import com.example.stockhome.ui.screens.EditarPerfilScreen
+import com.example.stockhome.ui.screens.EsqueciSenhaScreen
 import com.example.stockhome.ui.screens.FormScreen
 import com.example.stockhome.ui.screens.HomeScreen
 import com.example.stockhome.ui.screens.ItensScreen
@@ -83,12 +86,15 @@ private fun AppRoot() {
             "splash" -> SplashScreen(go)
             "login" -> LoginScreen(go)
             "cadastro" -> CadastroScreen(go)
+            "esqueciSenha" -> EsqueciSenhaScreen(go)
             "home" -> HomeScreen(go)
             "itens" -> ItensScreen(go)
             "detalhe" -> DetalheScreen(go, (current.param as? Int) ?: 3)
             "form" -> FormScreen(go, current.param ?: "novo")
             "alertas" -> AlertasScreen(go)
             "perfil" -> PerfilScreen(go)
+            "editarPerfil" -> EditarPerfilScreen(go)
+            "alterarSenha" -> AlterarSenhaScreen(go)
         }
     }
 }

@@ -4,16 +4,18 @@ import { authRequired } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
   adjustQtySchema,
+  changePasswordSchema,
   createProductSchema,
   idParamSchema,
   listProductsQuerySchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
   updateMeSchema,
   updateProductSchema,
 } from '../schemas.js';
-import { login, register } from '../controllers/auth.controller.js';
-import { getMe, updateMe } from '../controllers/user.controller.js';
+import { login, register, resetPassword } from '../controllers/auth.controller.js';
+import { changePassword, getMe, updateMe } from '../controllers/user.controller.js';
 import { listCategories } from '../controllers/category.controller.js';
 import {
   adjustQuantity,
@@ -30,10 +32,12 @@ export const router = Router();
 // ── Auth ──────────────────────────────────────────────────────
 router.post('/auth/register', validate(registerSchema), asyncHandler(register));
 router.post('/auth/login', validate(loginSchema), asyncHandler(login));
+router.post('/auth/reset-password', validate(resetPasswordSchema), asyncHandler(resetPassword));
 
 // ── Profile ───────────────────────────────────────────────────
 router.get('/me', authRequired, asyncHandler(getMe));
 router.patch('/me', authRequired, validate(updateMeSchema), asyncHandler(updateMe));
+router.patch('/me/password', authRequired, validate(changePasswordSchema), asyncHandler(changePassword));
 
 // ── Categories ────────────────────────────────────────────────
 router.get('/categories', authRequired, asyncHandler(listCategories));

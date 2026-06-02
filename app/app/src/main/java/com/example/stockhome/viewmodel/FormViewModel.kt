@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 data class FormUiState(
     val loading: Boolean = false,
     val erro: String? = null,
+    val erroNome: String? = null,
     val salvo: Boolean = false,
     val editando: Boolean = false,
     val nomeProduto: String = "",
@@ -70,19 +71,10 @@ class FormViewModel(private val id: Any?) : ViewModel() {
         }
     }
 
-    fun onNomeChange(nome: String) = _uiState.update { it.copy(nomeProduto = nome) }
+    fun onNomeChange(nome: String) = _uiState.update { it.copy(nomeProduto = nome, erroNome = null) }
     fun onCategoriaChange(cat: ApiCategory) = _uiState.update { it.copy(categoriaSelecionada = cat) }
     fun onValidadeChange(v: String) = _uiState.update { it.copy(validade = v) }
     fun onUnidadeChange(u: String) = _uiState.update { it.copy(unidade = u) }
-
-    /** Avança para a próxima categoria da lista (seletor simples por toque). */
-    fun proximaCategoria() {
-        val cats = _uiState.value.categorias
-        if (cats.isEmpty()) return
-        val atual = cats.indexOfFirst { it.id == _uiState.value.categoriaSelecionada?.id }
-        val proxima = cats[(atual + 1).mod(cats.size)]
-        _uiState.update { it.copy(categoriaSelecionada = proxima) }
-    }
 
     fun incrementarQtdAtual() = _uiState.update { it.copy(qtdAtual = it.qtdAtual + 1) }
     fun decrementarQtdAtual() = _uiState.update { it.copy(qtdAtual = maxOf(0, it.qtdAtual - 1)) }
@@ -92,7 +84,7 @@ class FormViewModel(private val id: Any?) : ViewModel() {
     fun salvar() {
         val state = _uiState.value
         if (state.nomeProduto.isBlank()) {
-            _uiState.update { it.copy(erro = "Informe o nome do produto.") }
+            _uiState.update { it.copy(erroNome = "Informe o nome do produto.", erro = null) }
             return
         }
         val catId = state.categoriaSelecionada?.id

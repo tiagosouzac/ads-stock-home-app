@@ -15,6 +15,14 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Informe a senha.'),
 });
 
+// "Esqueci minha senha" simplificado: sem envio real de e-mail, o usuário
+// informa o e-mail e já define a nova senha. Em produção isto exigiria um
+// token de recuperação enviado por e-mail.
+export const resetPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('E-mail inválido.'),
+  newPassword: z.string().min(6, 'Use ao menos 6 caracteres.'),
+});
+
 // ── Profile ───────────────────────────────────────────────────
 export const updateMeSchema = z
   .object({
@@ -22,6 +30,11 @@ export const updateMeSchema = z
     alertDays: z.coerce.number().int().min(1).max(90).optional(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'Nada para atualizar.' });
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Informe a senha atual.'),
+  newPassword: z.string().min(6, 'Use ao menos 6 caracteres.'),
+});
 
 // ── Products ──────────────────────────────────────────────────
 // expiresAt accepts "YYYY-MM-DD" or null

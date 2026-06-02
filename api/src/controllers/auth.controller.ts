@@ -37,6 +37,24 @@ export async function register(req: Request, res: Response) {
   res.status(201).json({ token, user: publicUser(user) });
 }
 
+/**
+ * "Esqueci minha senha" simplificado: redefine a senha diretamente a partir do
+ * e-mail informado (sem token/e-mail de recuperação — adequado ao projeto
+ * acadêmico). Responde 200 mesmo quando o e-mail não existe, para não revelar
+ * quais contas estão cadastradas.
+ */
+export async function resetPassword(req: Request, res: Response) {
+  const { email, newPassword } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (user) {
+    const hash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: user.id }, data: { password: hash } });
+  }
+
+  res.json({ ok: true });
+}
+
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
 

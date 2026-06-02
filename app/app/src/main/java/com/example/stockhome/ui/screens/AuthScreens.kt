@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -124,88 +123,68 @@ fun LoginScreen(
         }
     }
 
+    // Layout fiel ao design: logo à esquerda, campos diretos sobre o fundo.
     Column(
         Modifier
             .fillMaxSize()
             .background(Sh.bg)
-            .verticalScroll(rememberScrollState()),
+            .padding(start = 24.dp, end = 24.dp, top = 40.dp, bottom = 24.dp),
     ) {
-        // Cabeçalho de marca com um leve degradê verde.
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Sh.brandTint, Sh.bg)))
-                .padding(top = 52.dp, bottom = 30.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Logo(72)
-                Spacer(Modifier.height(16.dp))
-                Wordmark(28f)
-                Spacer(Modifier.height(6.dp))
-                T("Sua despensa sob controle", 13.5f, FontWeight.SemiBold, Sh.ink3)
+        Logo(60)
+        Spacer(Modifier.height(28.dp))
+        T("Bem-vindo de volta", 27f, FontWeight.ExtraBold, Sh.ink, letterSpacing = -0.5f)
+        Spacer(Modifier.height(6.dp))
+        T("Entre para acompanhar seu estoque.", 15f, FontWeight.SemiBold, Sh.ink3)
+        Spacer(Modifier.height(32.dp))
+
+        Field(
+            label = "E-mail",
+            value = email,
+            onValueChange = { email = it; vm.limparErro() },
+            placeholder = "voce@email.com",
+            icon = "mail",
+            keyboardType = KeyboardType.Email,
+        )
+        Field(
+            label = "Senha",
+            value = senha,
+            onValueChange = { senha = it; vm.limparErro() },
+            placeholder = "Sua senha",
+            icon = "lock",
+            isPassword = !verSenha,
+            keyboardType = KeyboardType.Password,
+            trailing = {
+                Box(Modifier.clickable { verSenha = !verSenha }) {
+                    Icon("eye", 20.dp, color = if (verSenha) Sh.brand else Sh.ink3)
+                }
+            },
+        )
+        if (state.erro != null) {
+            T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
+            Spacer(Modifier.height(6.dp))
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Box(Modifier.clickable { go("esqueciSenha", null) }) {
+                T("Esqueci minha senha", 13.5f, FontWeight.Bold, Sh.brandDark)
             }
         }
+        Spacer(Modifier.height(20.dp))
+        Button(
+            if (state.loading) "Entrando…" else "Entrar",
+            { vm.login(email, senha) },
+            icon = "logout",
+        )
 
-        Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 6.dp, bottom = 28.dp)) {
-            T("Seja Bem-Vindo!", 27f, FontWeight.ExtraBold, Sh.ink, letterSpacing = -0.5f)
-            Spacer(Modifier.height(6.dp))
-            T("Entre para acompanhar seu estoque.", 15f, FontWeight.SemiBold, Sh.ink3)
-            Spacer(Modifier.height(22.dp))
-
-            // Formulário dentro de um cartão, destacando-o do fundo.
-            com.example.stockhome.ui.components.Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 22.dp)) {
-                    Field(
-                        label = "E-mail",
-                        value = email,
-                        onValueChange = { email = it; vm.limparErro() },
-                        placeholder = "voce@email.com",
-                        icon = "mail",
-                        keyboardType = KeyboardType.Email,
-                    )
-                    Field(
-                        label = "Senha",
-                        value = senha,
-                        onValueChange = { senha = it; vm.limparErro() },
-                        placeholder = "Sua senha",
-                        icon = "lock",
-                        isPassword = !verSenha,
-                        keyboardType = KeyboardType.Password,
-                        trailing = {
-                            Box(Modifier.clickable { verSenha = !verSenha }) {
-                                Icon("eye", 20.dp, color = if (verSenha) Sh.brand else Sh.ink3)
-                            }
-                        },
-                    )
-                    if (state.erro != null) {
-                        T(state.erro!!, 13f, FontWeight.SemiBold, Sh.danger.fg)
-                        Spacer(Modifier.height(10.dp))
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Box(Modifier.clickable { }) {
-                            T("Esqueci minha senha", 13.5f, FontWeight.Bold, Sh.brandDark)
-                        }
-                    }
-                    Spacer(Modifier.height(18.dp))
-                    Button(
-                        if (state.loading) "Entrando…" else "Entrar",
-                        { vm.login(email, senha) },
-                        icon = "logout",
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(26.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                T("Não tem conta? ", 14f, FontWeight.SemiBold, Sh.ink2)
-                Box(Modifier.clickable { go("cadastro", null) }) {
-                    T("Cadastre-se", 14f, FontWeight.ExtraBold, Sh.brandDark)
-                }
+        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(24.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            T("Não tem conta? ", 14f, FontWeight.SemiBold, Sh.ink2)
+            Box(Modifier.clickable { go("cadastro", null) }) {
+                T("Cadastre-se", 14f, FontWeight.ExtraBold, Sh.brandDark)
             }
         }
     }

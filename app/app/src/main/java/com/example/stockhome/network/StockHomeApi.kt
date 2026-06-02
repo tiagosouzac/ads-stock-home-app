@@ -6,10 +6,13 @@ import com.example.stockhome.data.ApiCategory
 import com.example.stockhome.data.ApiProduct
 import com.example.stockhome.data.ApiUser
 import com.example.stockhome.data.AuthResponse
+import com.example.stockhome.data.ChangePasswordRequest
 import com.example.stockhome.data.CreateProductRequest
 import com.example.stockhome.data.DashboardSummary
 import com.example.stockhome.data.LoginRequest
+import com.example.stockhome.data.OkResponse
 import com.example.stockhome.data.RegisterRequest
+import com.example.stockhome.data.ResetPasswordRequest
 import com.example.stockhome.data.UpdateMeRequest
 import com.example.stockhome.data.UpdateProductRequest
 import retrofit2.Response
@@ -35,6 +38,9 @@ interface StockHomeApi {
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): Response<AuthResponse>
 
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body body: ResetPasswordRequest): Response<OkResponse>
+
     // ── Profile ───────────────────────────────────────────────
 
     @GET("me")
@@ -42,6 +48,9 @@ interface StockHomeApi {
 
     @PATCH("me")
     suspend fun updateMe(@Body body: UpdateMeRequest): Response<ApiUser>
+
+    @PATCH("me/password")
+    suspend fun changePassword(@Body body: ChangePasswordRequest): Response<OkResponse>
 
     // ── Categories ────────────────────────────────────────────
 
